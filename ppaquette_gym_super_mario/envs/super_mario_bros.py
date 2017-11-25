@@ -150,7 +150,6 @@ class SuperMarioBrosEnv(NesEnv):
     def _process_done_message(self, frame_number):
         # Done means frame is done processing, please send next command
         # Format: done_<frame>
-        print(frame_number)
         if frame_number > self.last_frame:
             self.last_frame = frame_number
 
