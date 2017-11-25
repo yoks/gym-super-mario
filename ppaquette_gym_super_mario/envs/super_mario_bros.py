@@ -2,8 +2,8 @@ import logging
 import os
 
 import numpy as np
-
 from gym import spaces
+
 from .nes_env import NesEnv, MetaNesEnv
 
 logger = logging.getLogger(__name__)
@@ -22,7 +22,8 @@ SMB_LEVELS = [
     (6, 1, 1, 3106), (6, 2, 2, 3554), (6, 3, 3, 2754), (6, 4, 4, 2429),
     (7, 1, 1, 2962), (7, 2, 2, 3266), (7, 3, 4, 3682), (7, 4, 5, 3453),
     (8, 1, 1, 6114), (8, 2, 2, 3554), (8, 3, 3, 3554), (8, 4, 4, 4989)]
-SUPER_MARIO_ROM_PATH = os.path.join(os.path.dirname(__file__), 'roms', 'super-mario.nes')
+SUPER_MARIO_ROM_PATH = os.path.join(os.path.dirname(__file__), '../roms', 'super-mario.nes')
+
 
 # --------------
 # Helper Methods
@@ -44,8 +45,8 @@ class SuperMarioBrosEnv(NesEnv):
         package_directory = os.path.dirname(os.path.abspath(__file__))
         self.level = level
         self.draw_tiles = 1 if draw_tiles else 0
-        self._mode = 'algo'             # 'algo' or 'human'
-        self.lua_path.append(os.path.join(package_directory, 'lua/super-mario-bros.lua'))
+        self._mode = 'algo' # 'algo' or 'human'
+        self.lua_path.append(os.path.join(package_directory, '../lua/super-mario-bros.lua'))
         self.tiles = None
         self.launch_vars['target'] = self._get_level_code(self.level)
         self.launch_vars['mode'] = 'algo'
@@ -149,6 +150,7 @@ class SuperMarioBrosEnv(NesEnv):
     def _process_done_message(self, frame_number):
         # Done means frame is done processing, please send next command
         # Format: done_<frame>
+        print(frame_number)
         if frame_number > self.last_frame:
             self.last_frame = frame_number
 
@@ -247,7 +249,6 @@ class SuperMarioBrosEnv(NesEnv):
 
 
 class MetaSuperMarioBrosEnv(SuperMarioBrosEnv, MetaNesEnv):
-
     def __init__(self, average_over=10, passing_grade=600, min_tries_for_avg=5, draw_tiles=0):
         MetaNesEnv.__init__(self,
                             average_over=average_over,

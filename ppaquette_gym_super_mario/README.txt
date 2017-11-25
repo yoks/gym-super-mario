@@ -129,9 +129,9 @@ Wrappers:
 
     - Control:
 
-        You can play the game manually with the SetPlayingMode wrapper.
+        You can play the game manually with the set_playing_mode wrapper.
 
-            wrapper = SetPlayingMode('human')
+            wrapper = set_playing_mode('human')
             env = wrapper(env)
 
         Valid options are 'human' or 'algo' (default)

@@ -1,13 +1,11 @@
 import logging
-import os
 import multiprocessing
+import os
 import signal
 import subprocess
 import tempfile
-from distutils import spawn
 from threading import Thread, Lock
 from time import sleep
-
 import numpy as np
 
 import gym
@@ -15,24 +13,26 @@ from gym import utils, spaces
 from gym.utils import seeding
 
 SEARCH_PATH = os.pathsep.join([os.environ['PATH'], '/usr/games', '/usr/local/games'])
-FCEUX_PATH = spawn.find_executable('fceux', SEARCH_PATH)
-if FCEUX_PATH is None:
-    raise gym.error.DependencyNotInstalled("fceux is required. Try installing with apt-get install fceux.")
+FCEUX_PATH = 'fceux'
 
 logger = logging.getLogger(__name__)
 
 # Constants
 NUM_ACTIONS = 6
 
+
 # Singleton pattern
 class NesLock:
     class __NesLock:
         def __init__(self):
             self.lock = multiprocessing.Lock()
+
     instance = None
+
     def __init__(self):
         if not NesLock.instance:
             NesLock.instance = NesLock.__NesLock()
+
     def get_lock(self):
         return NesLock.instance.lock
 
@@ -67,11 +67,11 @@ class NesEnv(gym.Env, utils.EzPickle):
         self.launch_vars['pipe_prefix'] = self.path_pipe_prefix
 
         # Other vars
-        self.is_initialized = 0     # Used to indicate fceux has been launched and is running
-        self.is_exiting = 0         # Used to stop the listening thread
-        self.last_frame = 0         # Last processed frame
-        self.reward = 0             # Reward for last action
-        self.episode_reward = 0     # Total rewards for episode
+        self.is_initialized = 0  # Used to indicate fceux has been launched and is running
+        self.is_exiting = 0  # Used to stop the listening thread
+        self.last_frame = 0  # Last processed frame
+        self.reward = 0  # Reward for last action
+        self.episode_reward = 0  # Total rewards for episode
         self.is_finished = False
         self.screen = np.zeros(shape=(self.screen_height, self.screen_width, 3), dtype=np.uint8)
         self.info = {}
@@ -182,9 +182,11 @@ class NesEnv(gym.Env, utils.EzPickle):
 
     def _launch_fceux(self):
         # Making sure ROM file is valid
+        print('Loading ROM: ' + self.rom_path)
         if '' == self.rom_path or not os.path.isfile(self.rom_path):
-            raise gym.error.Error('Unable to find ROM. Please download the game from the web and configure the rom path by ' +
-                                  'calling env.configure(rom_path=path_to_file)')
+            raise gym.error.Error(
+                'Unable to find ROM. Please download the game from the web and configure the rom path by ' +
+                'calling env.configure(rom_path=path_to_file)')
 
         # Creating pipes
         self._create_pipes()
@@ -212,12 +214,21 @@ class NesEnv(gym.Env, utils.EzPickle):
         # Loading fceux
         args = [FCEUX_PATH]
         args.extend(self.cmd_args[:])
-        args.extend(['--loadlua', temp_lua_path])
+
+        if os.name is 'nt':
+            args.extend(['-lua', temp_lua_path.replace('\\', "/")])
+        else:
+            args.extend(['--loadlua', temp_lua_path])
         args.append(self.rom_path)
-        args.extend(['>/dev/null', '2>/dev/null', '&'])
+
+        if os.name is not 'nt':
+            args.extend(['>/dev/null', '2>/dev/null', '&'])
+
+        print('Launching fceux with params: ' + ' '.join(args))
         self.subprocess = subprocess.Popen(' '.join(args), shell=True)
         self.subprocess.communicate()
         if 0 == self.subprocess.returncode:
+            print('FCEUX Started')
             self.is_initialized = 1
             if not self.disable_out_pipe:
                 with self.lock_out:
@@ -402,7 +413,8 @@ class NesEnv(gym.Env, utils.EzPickle):
         self.curr_seed = seeding.hash_seed(seed) % 256
         return [self.curr_seed]
 
-    def _get_rgb_from_palette(self, palette):
+    @staticmethod
+    def _get_rgb_from_palette(palette):
         rgb = {
             '00': (116, 116, 116),
             '01': (36, 24, 140),
@@ -593,8 +605,8 @@ class MetaNesEnv(NesEnv):
     def _get_standard_reward(self, episode_reward):
         # Can be overridden
         std_reward = episode_reward
-        std_reward = min(1000, std_reward)                                  # Cannot be more than 1,000
-        std_reward = max(0, std_reward)                                     # Cannot be less than 0
+        std_reward = min(1000, std_reward)  # Cannot be more than 1,000
+        std_reward = max(0, std_reward)  # Cannot be less than 0
         return std_reward
 
     def get_total_reward(self):

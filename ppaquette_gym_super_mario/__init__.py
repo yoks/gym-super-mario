@@ -1,8 +1,7 @@
 from gym.envs.registration import register
-from gym.scoreboard.registration import add_task, add_group
-from .package_info import USERNAME
-from .nes_env import NesEnv, MetaNesEnv
-from .super_mario_bros import SuperMarioBrosEnv, MetaSuperMarioBrosEnv
+
+from package_info import USERNAME
+from ppaquette_gym_super_mario.envs.nes_env import NesEnv, MetaNesEnv
 
 # Env registration
 # ==========================
@@ -22,10 +21,10 @@ for draw_tiles in range(2):
 
     register(
         id='{}/meta-SuperMarioBros{}-v0'.format(USERNAME, tile_suffix),
-        entry_point='{}_gym_super_mario:MetaSuperMarioBrosEnv'.format(USERNAME),
+        entry_point='{}_gym_super_mario.envs:MetaSuperMarioBrosEnv'.format(USERNAME),
         max_episode_steps=9999999,
         reward_threshold=32000,
-        kwargs={ 'draw_tiles': draw_tiles, 'average_over': 3, 'passing_grade': 600, 'min_tries_for_avg': 3 },
+        kwargs={'draw_tiles': draw_tiles, 'average_over': 3, 'passing_grade': 600, 'min_tries_for_avg': 3},
         nondeterministic=True,
     )
 
@@ -33,42 +32,10 @@ for draw_tiles in range(2):
         level = (world_number - 1) * 4 + (level_number - 1)
         register(
             id='{}/SuperMarioBros-{}-{}{}-v0'.format(USERNAME, world_number, level_number, tile_suffix),
-            entry_point='{}_gym_super_mario:SuperMarioBrosEnv'.format(USERNAME),
+            entry_point='{}_gym_super_mario.envs:SuperMarioBrosEnv'.format(USERNAME),
             max_episode_steps=10000,
             reward_threshold=(max_distance - 40),
-            kwargs={ 'draw_tiles': draw_tiles, 'level': level },
+            kwargs={'draw_tiles': draw_tiles, 'level': level},
             # Seems to be non-deterministic about 5% of the time
             nondeterministic=True,
-        )
-
-# Scoreboard registration
-# ==========================
-add_group(
-    id= 'super-mario',
-    name= 'SuperMario',
-    description= '32 levels of the original Super Mario Bros game.'
-)
-
-add_task(
-    id='{}/meta-SuperMarioBros-v0'.format(USERNAME),
-    group='super-mario',
-    summary='Compilation of all 32 levels of Super Mario Bros. on Nintendo platform - Screen version.',
-)
-add_task(
-    id='{}/meta-SuperMarioBros-Tiles-v0'.format(USERNAME),
-    group='super-mario',
-    summary='Compilation of all 32 levels of Super Mario Bros. on Nintendo platform - Tiles version.',
-)
-
-for world in range(8):
-    for level in range(4):
-        add_task(
-            id='{}/SuperMarioBros-{}-{}-v0'.format(USERNAME, world + 1, level + 1),
-            group='super-mario',
-            summary='Level: {}-{} of Super Mario Bros. on Nintendo platform - Screen version.'.format(world + 1, level + 1),
-        )
-        add_task(
-            id='{}/SuperMarioBros-{}-{}-Tiles-v0'.format(USERNAME, world + 1, level + 1),
-            group='super-mario',
-            summary='Level: {}-{} of Super Mario Bros. on Nintendo platform - Tiles version.'.format(world + 1, level + 1),
         )
