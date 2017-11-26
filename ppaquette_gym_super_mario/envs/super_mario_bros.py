@@ -100,6 +100,7 @@ class SuperMarioBrosEnv(NesEnv):
         if frame_number <= self.last_frame or self.info is None:
             return
         parts = data.split('|')
+        self.reward = 0
         for part in parts:
             if part.find(':') == -1:
                 continue
@@ -109,8 +110,23 @@ class SuperMarioBrosEnv(NesEnv):
             if 'is_finished' == name:
                 self.is_finished = bool(value)
             elif 'distance' == name:
-                self.reward = value - self.info[name]
-                self.episode_reward = value
+                if value > self.info[name]:
+                    rev = value - self.info[name]
+                    self.reward += rev
+                    self.episode_reward += rev
+                    self.info[name] = value
+                else:
+                    self.reward -= 1
+                    self.episode_reward -= 1
+            elif 'score' == name:
+                if value > self.info[name]:
+                    rev = (value - self.info[name]) / 100
+                    self.reward += rev
+                    self.episode_reward += rev
+                    self.info[name] = value
+            elif 'life' == name:
+                self.reward -= ((3-value) * 500)
+                self.episode_reward -= ((3-value) * 500)
                 self.info[name] = value
             else:
                 self.info[name] = value
