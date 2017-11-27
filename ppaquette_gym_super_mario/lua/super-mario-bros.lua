@@ -116,7 +116,7 @@ if mode == "human" then
 else
     -- algo
     emu.speedmode("maximum");
-    skip_frames = 2;
+    skip_frames = 4;
     start_delay = 175;
     send_all_pixels = 1500;
 end;
