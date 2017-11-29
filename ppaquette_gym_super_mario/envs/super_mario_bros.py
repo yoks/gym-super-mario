@@ -111,8 +111,17 @@ class SuperMarioBrosEnv(NesEnv):
                 self.is_finished = bool(value)
             elif 'distance' == name:
                 rev = value - self.info[name]
-                self.reward += rev
-                self.episode_reward += rev
+                if rev < 0:
+                    self.reward += rev
+                    self.episode_reward += rev
+                elif rev > 0:
+                    rev *= 0.1
+                    self.reward += rev
+                    self.episode_reward += rev
+                else:
+                    rev = -0.1
+                    self.reward += rev
+                    self.episode_reward += rev
                 self.info[name] = value
             elif 'score' == name:
                 if value > self.info[name]:

@@ -79,7 +79,7 @@ class NesEnv(gym.Env, utils.EzPickle):
         self._reset_info_vars()
         self.first_step = False
         self.lock = (NesLock()).get_lock()
-
+        self.temp_lua_path = ""
         # Seeding
         self.curr_seed = 0
         self._seed()
@@ -145,7 +145,7 @@ class NesEnv(gym.Env, utils.EzPickle):
 
     def _listen_to_incoming_pipe(self, pipe_name):
         # Listens to incoming messages
-        self.path_pipe_in = '%s-in.%d' % (self.path_pipe_prefix, self.pipe_name)
+        self.path_pipe_in = '%s-in.%s' % (self.path_pipe_prefix, pipe_name)
         if not os.path.exists(self.path_pipe_in):
             os.mkfifo(self.path_pipe_in)
         try:
@@ -192,8 +192,8 @@ class NesEnv(gym.Env, utils.EzPickle):
         self._create_pipes()
 
         # Creating temporary lua file
-        temp_lua_path = os.path.join('/tmp', str(seeding.hash_seed(None) % 2 ** 32) + '.lua')
-        temp_lua_file = open(temp_lua_path, 'w', 1)
+        self.temp_lua_path = os.path.join('/tmp', str(seeding.hash_seed(None) % 2 ** 32) + '.lua')
+        temp_lua_file = open(self.temp_lua_path, 'w', 1)
         for k, v in list(self.launch_vars.items()):
             temp_lua_file.write('%s = "%s";\n' % (k, v))
         i = 0
@@ -216,9 +216,9 @@ class NesEnv(gym.Env, utils.EzPickle):
         args.extend(self.cmd_args[:])
 
         if os.name is 'nt':
-            args.extend(['-lua', temp_lua_path.replace('\\', "/")])
+            args.extend(['-lua', self.temp_lua_path.replace('\\', "/")])
         else:
-            args.extend(['--loadlua', temp_lua_path])
+            args.extend(['--loadlua', self.temp_lua_path])
         args.append(self.rom_path)
 
         if os.name is not 'nt':
@@ -238,9 +238,9 @@ class NesEnv(gym.Env, utils.EzPickle):
                         self.pipe_out = None
             # Removing lua file
             sleep(1)  # Sleeping to make sure fceux has time to load file before removing
-            if os.path.isfile(temp_lua_path):
+            if os.path.isfile(self.temp_lua_path):
                 try:
-                    os.remove(temp_lua_path)
+                    os.remove(self.temp_lua_path)
                 except OSError:
                     pass
         else:
@@ -338,7 +338,8 @@ class NesEnv(gym.Env, utils.EzPickle):
                     if self.subprocess is not None:
                         # Workaround, killing process with pid + 1 (shell = pid, shell + 1 = fceux)
                         try:
-                            os.kill(self.subprocess.pid + 1, signal.SIGKILL)
+                            cmd = "ps -ef | grep 'fceux' | grep '%s' | grep -v grep | awk '{print \"kill -9\",$2}' | sh -v" % self.temp_lua_path
+                            os.system(cmd)
                         except OSError:
                             pass
                         self.subprocess = None
@@ -395,7 +396,8 @@ class NesEnv(gym.Env, utils.EzPickle):
         if self.subprocess is not None:
             # Workaround, killing process with pid + 1 (shell = pid, shell + 1 = fceux)
             try:
-                os.kill(self.subprocess.pid + 1, signal.SIGKILL)
+                cmd = "ps -ef | grep 'fceux' | grep '%s' | grep -v grep | awk '{print \"kill -9\",$2}' | sh -v" % self.temp_lua_path
+                os.system(cmd)
             except OSError:
                 pass
             self.subprocess = None
