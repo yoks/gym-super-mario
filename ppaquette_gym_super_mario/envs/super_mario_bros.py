@@ -114,10 +114,12 @@ class SuperMarioBrosEnv(NesEnv):
                 if rev < 0:
                     self.reward += rev
                     self.episode_reward += rev
-                elif rev > 0:
-                    rev *= 0.1
+                elif rev > 10:
                     self.reward += rev
                     self.episode_reward += rev
+                elif rev > 0:
+                    self.reward += rev*0.5
+                    self.episode_reward += ev*0.5
                 else:
                     rev = -0.1
                     self.reward += rev
